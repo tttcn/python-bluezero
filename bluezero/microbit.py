@@ -52,7 +52,11 @@ TEMP_PERIOD = 'E95D1B25-251D-470A-A062-FA1922DFA9A8'
 UART_SRV = '6E400001-B5A3-F393-E0A9-E50E24DCCA9E'
 UART_TX = '6E400002-B5A3-F393-E0A9-E50E24DCCA9E'
 UART_RX = '6E400003-B5A3-F393-E0A9-E50E24DCCA9E'
-
+EVENT_SRV = 'E95D93AF-251D-470A-A062-FA1922DFA9A8'
+UBIT_REQ = 'E95DB84C-251D-470A-A062-FA1922DFA9A8'
+UBIT_EVT = 'E95D9775-251D-470A-A062-FA1922DFA9A8'
+CLIENT_REQ = 'E95D23C4-251D-470A-A062-FA1922DFA9A8'
+CLIENT_EVT = 'E95D5404-251D-470A-A062-FA1922DFA9A8'
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.WARNING)
 logger.addHandler(NullHandler())
@@ -69,7 +73,8 @@ class Microbit:
                  magnetometer_service=False,
                  pin_service=False,
                  temperature_service=True,
-                 uart_service=False):
+                 uart_service=False,
+                 event_service=False):
         """
         Initialization of an instance of a remote micro:bit
         :param device_addr: Discovered microbit device with this address
@@ -133,6 +138,11 @@ class Microbit:
                                                          UART_TX)
             self._uart_rx = self.ubit.add_characteristic(UART_SRV,
                                                          UART_RX)
+        if event_service:
+            self._ubit_reqs = self.ubit.add_characteristic(EVENT_SRV,
+                                                           UBIT_REQ)
+            self._client_evt = self.ubit.add_characteristic(EVENT_SRV,
+                                                            CLIENT_EVT)
 
     @property
     def connected(self):
@@ -550,6 +560,21 @@ class Microbit:
             return
         if 'Value' in changed_props:
             self.uart_tx_cb(''.join([str(v) for v in changed_props['Value']]))
+
+    @property
+    def microbit_requirements(self):
+        return self._ubit_reqs.value
+
+    @property
+    def client_event(self):
+        pass
+
+    @client_event.setter
+    def client_event(self, etype_evalue):
+        sint16_array = []
+        for val in etype_evalue:
+            sint16_array += int.to_bytes(val, 2, 'little')
+        self._client_evt.value = sint16_array
 
     @property
     def on_disconnect(self):

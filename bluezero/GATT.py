@@ -167,7 +167,9 @@ class Characteristic:
 
     @value.setter
     def value(self, new_value):
-        if type(new_value) is not list:
+        if type(new_value) is bytes:
+            pass
+        elif type(new_value) is not list:
             new_value = [new_value]
         self.write_value(new_value)
 
